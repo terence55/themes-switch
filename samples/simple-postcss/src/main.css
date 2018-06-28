@@ -1,0 +1,13 @@
+@import './assets/themes/default.css';
+
+.main {
+  background: var(--color-main);
+}
+
+.title {
+  color: var(--color-text);
+}
+
+.desc {
+  color: var(--color-text);
+}

@@ -1,0 +1,14 @@
+.DS_Store
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace
+Thumbs.db
+node_modules
+dist
+npm-debug.log*
+/samples/*/build
+/samples/*/temp
+/test/src/*/build
+/test/src/*/temp
+package-lock.json

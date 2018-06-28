@@ -1,0 +1,14 @@
+.DS_Store
+.vscode
+.idea
+node_modules
+samples
+src
+dist
+.babelrc
+.eslintrc.json
+.npmignore
+.eslintignore
+*.sh
+webpack.config.js
+npm-debug.log
