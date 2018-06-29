@@ -2,7 +2,7 @@ import { changeTheme } from '../../../src/index';
 
 import './main.scss';
 
-const themes = process.env.themes;
+const themes = process.themes;
 const buttonsContainer = document.getElementById('buttons');
 let currentLink;
 

@@ -88,7 +88,7 @@ src
 
 - `ThemesGeneratorPlugin` scans files in `themesDir` and files that import `default.less`, then generates separated files for all themes automatically.
 
-- You can access the themes info via `process.env.themes` in your code, value such as `{ 'theme-dark': 'css/dark.css', 'theme-light': 'css/light.css' }`.
+- You can access the themes info via `process.themes` in your code, value such as `{ 'theme-dark': 'css/dark.css', 'theme-light': 'css/light.css' }`.
 
 - Call `changeTheme` method to switch to new theme by pass theme name and url.
 
@@ -111,7 +111,7 @@ src
 ### changeTheme
 
 - theme: new theme name, such as `theme-dark`.
-- themeUrl: new theme url, such as `css/dark.css`. You can get the value from `process.env.themes`
+- themeUrl: new theme url, such as `css/dark.css`. You can get the value from `process.themes`
 - currentLink: current link element that would be removed when new element had been loaded.
 - onLoad: callback when new link was loaded.
 

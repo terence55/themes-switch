@@ -35,8 +35,8 @@ class ThemesGeneratorPlugin {
       return;
     }
     const { themesPaths, finalThemes, extractPlugins, themeLoaders } = this.generateExtraOptions();
-    compiler.plugin('before-run', (compilation, callback) => {
-      if (typeof compilation.options.entry !== 'object') {
+    compiler.plugin('entry-option', () => {
+      if (typeof compiler.options.entry !== 'object') {
         console.log('Entry must be an object if ThemesGeneratorPlugin was used!');
         return;
       }
@@ -51,13 +51,15 @@ class ThemesGeneratorPlugin {
       extractPlugins.forEach(plugin => compiler.apply(plugin));
 
       compiler.apply(new webpack.DefinePlugin({
-        'process.env.themes': JSON.stringify(finalThemes)
+        process: {
+          themes: JSON.stringify(finalThemes)
+        }
       }));
 
-      if (!compilation.options.module.rules) {
-        compilation.options.module.rules = [];
+      if (!compiler.options.module.rules) {
+        compiler.options.module.rules = [];
       }
-      compilation.options.module.rules.forEach(((rule) => {
+      compiler.options.module.rules.forEach(((rule) => {
         if (!rule.exclude) {
           rule.exclude = themesPaths;
         } else if (Array.isArray(rule.exclude)) {
@@ -66,9 +68,7 @@ class ThemesGeneratorPlugin {
           rule.exclude = [rule.exclude, ...themesPaths];
         }
       }));
-      compilation.options.module.rules = compilation.options.module.rules.concat(themeLoaders);
-
-      callback();
+      compiler.options.module.rules = compiler.options.module.rules.concat(themeLoaders);
     });
 
     compiler.plugin('emit', (compilation, callback) => {
