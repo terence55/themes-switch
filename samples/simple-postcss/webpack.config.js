@@ -1,9 +1,8 @@
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const cssnext = require('postcss-cssnext');
 const ThemesGeneratorPlugin = require('../../src/ThemesGeneratorPlugin');
 
-const cssFilename = '[name].[contenthash:8].css';
+const cssFilename = '[name].[hash:8].css';
 const extractNormal = new ExtractTextPlugin(cssFilename);
 
 const loaders = [

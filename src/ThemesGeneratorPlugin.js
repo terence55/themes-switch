@@ -11,6 +11,7 @@ const TEMP_THEMES_DIR = path.resolve(TEMP_DIR, TEMP_THEMES_DIR_NAME);
 const TEMP_THEME_NAME = 'tempthemes';
 const TEMP_THEME_JS = `${TEMP_THEME_NAME}.js`;
 const DEFAULT_STYLE_NAME = 'default';
+const pluginInfo = { name: 'ThemesGeneratorPlugin' };
 
 class ThemesGeneratorPlugin {
   constructor(options) {
@@ -35,26 +36,43 @@ class ThemesGeneratorPlugin {
       return;
     }
     const { themesPaths, finalThemes, extractPlugins, themeLoaders } = this.generateExtraOptions();
-    compiler.plugin('entry-option', () => {
+    const webpackNewVer = 'hooks' in compiler;
+    const onEntryOption = () => {
       if (typeof compiler.options.entry !== 'object') {
         console.log('Entry must be an object if ThemesGeneratorPlugin was used!');
         return;
       }
       console.log('Themes generating started...');
 
-      compiler.apply(new EntryPlugin(
+      const entryPlugin = new EntryPlugin(
         this.context,
         path.join(TEMP_DIR, TEMP_THEME_JS),
         TEMP_THEME_NAME
-      ));
+      );
+      if (webpackNewVer) {
+        entryPlugin.apply(compiler);
+      } else {
+        compiler.apply(entryPlugin);
+      }
 
-      extractPlugins.forEach(plugin => compiler.apply(plugin));
+      extractPlugins.forEach((plugin) => {
+        if (webpackNewVer) {
+          plugin.apply(compiler);
+        } else {
+          compiler.apply(plugin);
+        }
+      });
 
-      compiler.apply(new webpack.DefinePlugin({
+      const definePlugin = new webpack.DefinePlugin({
         process: {
           themes: JSON.stringify(finalThemes)
         }
-      }));
+      });
+      if (webpackNewVer) {
+        definePlugin.apply(compiler);
+      } else {
+        compiler.apply(definePlugin);
+      }
 
       if (!compiler.options.module.rules) {
         compiler.options.module.rules = [];
@@ -69,9 +87,8 @@ class ThemesGeneratorPlugin {
         }
       }));
       compiler.options.module.rules = compiler.options.module.rules.concat(themeLoaders);
-    });
-
-    compiler.plugin('emit', (compilation, callback) => {
+    };
+    const onEmit = (compilation, callback) => {
       const stats = compilation.getStats().toJson();
       const outputByThemes = stats.assetsByChunkName[TEMP_THEME_NAME];
       if (outputByThemes) {
@@ -88,13 +105,25 @@ class ThemesGeneratorPlugin {
           }
         }
       }
-      callback();
-    });
-
-    if (clearTemp) {
-      compiler.plugin('done', () => {
-        fs.removeSync(TEMP_DIR);
-      });
+      if (callback && typeof callback === 'function') {
+        callback();
+      }
+    };
+    const onDone = () => {
+      fs.removeSync(TEMP_DIR);
+    };
+    if (webpackNewVer) {
+      compiler.hooks.entryOption.tap(pluginInfo, onEntryOption);
+      compiler.hooks.emit.tapAsync(pluginInfo, onEmit);
+      if (clearTemp) {
+        compiler.hooks.done.tap(pluginInfo, onDone);
+      }
+    } else {
+      compiler.plugin('entry-option', onEntryOption);
+      compiler.plugin('emit', onEmit);
+      if (clearTemp) {
+        compiler.plugin('done', onDone);
+      }
     }
   }
 
