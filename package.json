@@ -1,6 +1,6 @@
 {
   "name": "themes-switch",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "Toolset for switch multiple themes in application based on webpack",
   "main": "dist/index.js",
   "scripts": {
