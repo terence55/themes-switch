@@ -78,13 +78,7 @@ class ThemesGeneratorPlugin {
         compiler.options.module.rules = [];
       }
       compiler.options.module.rules.forEach(((rule) => {
-        if (!rule.exclude) {
-          rule.exclude = themesPaths;
-        } else if (Array.isArray(rule.exclude)) {
-          rule.exclude = rule.exclude.concat(themesPaths);
-        } else {
-          rule.exclude = [rule.exclude, ...themesPaths];
-        }
+        ThemesGeneratorPlugin.fillExclude(rule.resource || rule, themesPaths);
       }));
       compiler.options.module.rules = compiler.options.module.rules.concat(themeLoaders);
     };
@@ -192,6 +186,16 @@ class ThemesGeneratorPlugin {
       importThemesContent += `import './${TEMP_THEMES_DIR_NAME}/${file}';\n`;
     });
     fs.writeFileSync(path.join(TEMP_DIR, TEMP_THEME_JS), importThemesContent);
+  }
+
+  static fillExclude(rule, themesPaths) {
+    if (!rule.exclude) {
+      rule.exclude = themesPaths;
+    } else if (Array.isArray(rule.exclude)) {
+      rule.exclude = rule.exclude.concat(themesPaths);
+    } else {
+      rule.exclude = [rule.exclude, ...themesPaths];
+    }
   }
 
   static clearTemp() {

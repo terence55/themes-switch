@@ -11,7 +11,8 @@
     "build-sample:less": "cd samples/simple-less && rm -rf build && webpack",
     "build-sample:postcss": "cd samples/simple-postcss && rm -rf build && webpack",
     "build-sample:sass": "cd samples/simple-sass && rm -rf build && webpack",
-    "build-sample:css": "cd samples/simple-css && rm -rf build && webpack"
+    "build-sample:css": "cd samples/simple-css && rm -rf build && webpack",
+    "build-sample:less-use-resource": "cd samples/simple-less-use-resource && rm -rf build && webpack"
   },
   "author": "trence320@163.com",
   "license": "MIT",
