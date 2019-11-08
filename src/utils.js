@@ -41,12 +41,17 @@ function randomNum(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-function getThemeName(fileName) {
-  return `theme-${path.basename(fileName, path.extname(fileName))}`;
+function recursiveIssuer(m) {
+  if (m.issuer) {
+    return recursiveIssuer(m.issuer);
+  } else if (m.name) {
+    return m.name;
+  }
+  return false;
 }
 
 module.exports = {
   collectFiles,
   randomNum,
-  getThemeName
+  recursiveIssuer
 };

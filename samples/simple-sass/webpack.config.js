@@ -1,18 +1,6 @@
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ThemesGeneratorPlugin = require('../../src/ThemesGeneratorPlugin');
-
-const cssFilename = '[name].[hash:8].css';
-const extractNormal = new ExtractTextPlugin(cssFilename);
-
-const loaders = [
-  {
-    loader: require.resolve('css-loader')
-  },
-  {
-    loader: require.resolve('sass-loader')
-  }
-];
 
 module.exports = {
   entry: {
@@ -28,18 +16,14 @@ module.exports = {
     rules: [
       {
         test: /\.(scss|sass)$/,
-        loader: extractNormal.extract({
-          use: loaders
-        })
+        loader: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader']
       }
     ]
   },
   plugins: [
-    extractNormal,
     new HtmlWebpackPlugin({
       inject: true,
-      template: 'index.html',
-      excludeChunks: ['tempthemes']
+      template: 'index.html'
     }),
     new ThemesGeneratorPlugin({
       srcDir: 'src',
@@ -47,11 +31,7 @@ module.exports = {
       outputDir: 'static/css',
       defaultStyleName: 'default.scss',
       clearTemp: false,
-      importAfterVariables: true,
-      themesLoader: {
-        test: /\.(scss|sass)$/,
-        loaders
-      }
+      importAfterVariables: true
     })
   ]
 };

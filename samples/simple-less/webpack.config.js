@@ -1,23 +1,12 @@
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ThemesGeneratorPlugin = require('../../src/ThemesGeneratorPlugin');
-
-const cssFilename = '[name].[hash:8].css';
-const extractNormal = new ExtractTextPlugin(cssFilename);
-
-const loaders = [
-  {
-    loader: require.resolve('css-loader')
-  },
-  {
-    loader: require.resolve('less-loader')
-  }
-];
 
 module.exports = {
   entry: {
     main: './src/main.js'
   },
+  mode: 'development',
   output: {
     filename: '[name]-[hash].js',
     chunkFilename: '[name]-[hash].js',
@@ -28,28 +17,20 @@ module.exports = {
     rules: [
       {
         test: /\.(less|css)$/,
-        loader: extractNormal.extract({
-          use: loaders
-        })
+        use: [MiniCssExtractPlugin.loader, 'css-loader', 'less-loader']
       }
     ]
   },
   plugins: [
-    extractNormal,
     new HtmlWebpackPlugin({
       inject: true,
-      template: 'index.html',
-      excludeChunks: ['tempthemes']
+      template: 'index.html'
     }),
     new ThemesGeneratorPlugin({
       srcDir: 'src',
       themesDir: 'src/assets/themes',
       outputDir: 'static/css',
-      defaultStyleName: 'default.less',
-      themesLoader: {
-        test: /\.(less|css)$/,
-        loaders
-      }
+      defaultStyleName: 'default.less'
     })
   ]
 };
