@@ -12,6 +12,7 @@ const TEMP_THEMES_DIR = path.resolve(TEMP_DIR, TEMP_THEMES_DIR_NAME);
 const DEFAULT_STYLE_NAME = 'default';
 const pluginInfo = { name: 'ThemesGeneratorPlugin' };
 const DEFAULT_THEME_OUTPUT_DIR = 'static/theme/';
+const DEFAULT_CSS_OUTPUT_NAME = '[name]-[hash].css';
 
 class ThemesGeneratorPlugin {
   constructor(options) {
@@ -105,7 +106,7 @@ class ThemesGeneratorPlugin {
         if (finalThemes[name]) {
           return `${finalThemes[name]}`;
         }
-        return orgMiniCssExtractPlugin && orgMiniCssExtractPlugin.options.filename ? orgMiniCssExtractPlugin.options.filename : '[name]-[hash].css';
+        return orgMiniCssExtractPlugin && orgMiniCssExtractPlugin.options.filename ? orgMiniCssExtractPlugin.options.filename : DEFAULT_CSS_OUTPUT_NAME;
       };
       if (orgMiniCssExtractPlugin) {
         orgMiniCssExtractPlugin.options.moduleFilename = moduleFilenameFunc;
