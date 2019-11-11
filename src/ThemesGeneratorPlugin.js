@@ -101,18 +101,23 @@ class ThemesGeneratorPlugin {
           }
         });
       }
-      const miniCssExtractPlugin = new MiniCssExtractPlugin({
-        moduleFilename: ({ name }) => {
-          if (finalThemes[name]) {
-            return `${finalThemes[name]}`;
-          }
-          return orgMiniCssExtractPlugin && orgMiniCssExtractPlugin.options.filename ? orgMiniCssExtractPlugin.options.filename : '[name]-[hash].css';
+      const moduleFilenameFunc = ({ name }) => {
+        if (finalThemes[name]) {
+          return `${finalThemes[name]}`;
         }
-      });
-      if (webpackNewVer) {
-        miniCssExtractPlugin.apply(compiler);
+        return orgMiniCssExtractPlugin && orgMiniCssExtractPlugin.options.filename ? orgMiniCssExtractPlugin.options.filename : '[name]-[hash].css';
+      };
+      if (orgMiniCssExtractPlugin) {
+        orgMiniCssExtractPlugin.options.moduleFilename = moduleFilenameFunc;
       } else {
-        compiler.apply(miniCssExtractPlugin);
+        const miniCssExtractPlugin = new MiniCssExtractPlugin({
+          moduleFilename: moduleFilenameFunc
+        });
+        if (webpackNewVer) {
+          miniCssExtractPlugin.apply(compiler);
+        } else {
+          compiler.apply(miniCssExtractPlugin);
+        }
       }
 
       if (compiler.options.plugins && compiler.options.plugins.length > 0) {

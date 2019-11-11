@@ -32,7 +32,8 @@ module.exports = {
       srcDir: 'src',
       themesDir: 'src/assets/themes',
       outputDir: 'static/css',
-      defaultStyleName: 'default.less'
+      defaultStyleName: 'default.less',
+      useStaticThemeName: true
     })
   ]
 };

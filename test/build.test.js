@@ -49,7 +49,8 @@ function testBuild(srcName, expectName, callback) {
       callback();
       return;
     }
-    var actualFiles = glob.sync('**/*', { cwd: actualDir, nodir: true });
+    var actualFiles = glob.sync('**/*.css', { cwd: actualDir, nodir: true });
+    console.log(srcName, 'actualFile:', actualFiles);
     actualFiles.forEach(function (file) {
       var actualFile = fs.readFileSync(path.join(actualDir, file), 'utf-8').replace(/\n(\n)*( )*(\n)*\n/g, '\n');
       var expectFile = fs.readFileSync(path.join(expectDir, file), 'utf-8').replace(/\n(\n)*( )*(\n)*\n/g, '\n');

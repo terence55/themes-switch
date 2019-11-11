@@ -6,7 +6,6 @@ module.exports = {
   entry: {
     main: './src/main.js'
   },
-  mode: 'development',
   output: {
     filename: '[name]-[hash].js',
     chunkFilename: '[name]-[hash].js',
