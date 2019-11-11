@@ -2,7 +2,7 @@ import { changeTheme } from '../../../src/index';
 
 import './main.css';
 
-const themes = process.themes;
+const themes = process.themes; // eslint-disable-line prefer-destructuring
 const buttonsContainer = document.getElementById('buttons');
 let currentLink;
 

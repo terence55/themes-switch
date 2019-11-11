@@ -1,36 +1,7 @@
 {
   "presets": [
     [
-      "env",
-      {
-        "useBuiltIns": true,
-        "targets": {
-          "node": "4.8"
-        },
-        "exclude": [
-          "transform-async-to-generator",
-          "transform-regenerator"
-        ]
-      }
+      "@babel/env"
     ]
-  ],
-  "plugins": [
-    [
-      "transform-object-rest-spread",
-      {
-        "useBuiltIns": true
-      }
-    ]
-  ],
-  "env": {
-    "test": {
-      "presets": [
-        "env"
-      ],
-      "sourceMap": "inline",
-      "plugins": [
-        "transform-object-rest-spread"
-      ]
-    }
-  }
+  ]
 }
