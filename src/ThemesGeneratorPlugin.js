@@ -38,7 +38,7 @@ class ThemesGeneratorPlugin {
     }
     const themeList = this.getThemeList();
     const webpackNewVer = 'hooks' in compiler;
-    const onEntryOption = () => {
+    const onEntryOption = (context) => {
       if (typeof compiler.options.entry !== 'object') {
         console.log('Entry must be an object if ThemesGeneratorPlugin was used!');
         return;
@@ -61,7 +61,7 @@ class ThemesGeneratorPlugin {
 
         themeList.forEach((theme) => {
           const entryPlugin = new EntryPlugin(
-            this.context,
+            this.context || context,
             theme.path,
             theme.key
           );
@@ -79,7 +79,7 @@ class ThemesGeneratorPlugin {
 
           let finalOutputDir = outputDir || DEFAULT_THEME_OUTPUT_DIR;
           finalOutputDir = finalOutputDir.endsWith('/') ? finalOutputDir : `${finalOutputDir}/`;
-          finalThemes[theme.key] = publicPath ? `${publicPath}/${finalOutputDir}${theme.outputName}` : `${finalOutputDir}${theme.outputName}`;
+          finalThemes[theme.key] = publicPath ? `${publicPath}${publicPath.endsWith('/') ? '' : '/'}${finalOutputDir}${theme.outputName}` : `${finalOutputDir}${theme.outputName}`;
         });
       }
 
