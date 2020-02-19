@@ -3,7 +3,6 @@
 .idea
 node_modules
 samples
-src
 dist
 .babelrc
 .eslintrc.json
