@@ -3,8 +3,8 @@ const PLUGIN_KEY = 'pkey';
 const PLUGIN_VALUE = 'themes-switch';
 
 function changeTheme(theme, themeUrl, onLoad) {
-  const head = document.head || document.getElementsByTagName('head')[0];
-  const links = head.getElementsByTagName('link');
+  const container = document.html || document.getElementsByTagName('html')[0];
+  const links = container.getElementsByTagName('link');
   let oldTheme;
   if (links && links.length > 0) {
     for (let i = 0; i < links.length; i++) {
@@ -19,7 +19,7 @@ function changeTheme(theme, themeUrl, onLoad) {
   link.href = themeUrl;
   setAttribute(link, THEME_KEY, theme);
   setAttribute(link, PLUGIN_KEY, PLUGIN_VALUE);
-  head.appendChild(link);
+  container.appendChild(link);
   link.onload = () => {
     removeNode(oldTheme);
     if (onLoad) {

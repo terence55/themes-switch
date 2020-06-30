@@ -13,7 +13,8 @@
     "build-sample:sass": "cd samples/simple-sass && rm -rf build && webpack",
     "build-sample:css": "cd samples/simple-css && rm -rf build && webpack",
     "build-sample:less-react": "cd samples/simple-less-react && rm -rf build && webpack",
-    "build-sample:less-vue": "cd samples/simple-less-vue && rm -rf build && webpack"
+    "build-sample:less-vue": "cd samples/simple-less-vue && rm -rf build && webpack",
+    "build-sample:less-vue-chunks": "cd samples/simple-less-vue-chunks && rm -rf build && webpack"
   },
   "author": "trence320@163.com",
   "license": "MIT",
@@ -55,6 +56,8 @@
     "sass-loader": "^8.0.2",
     "shelljs": "^0.8.3",
     "style-loader": "^1.1.3",
+    "vue-loader": "^14.2.4",
+    "vue-template-compiler": "^2.6.11",
     "webpack": "^4.3.0",
     "webpack-cli": "^3.3.10"
   },
