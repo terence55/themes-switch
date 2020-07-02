@@ -7,7 +7,7 @@ function collectFiles(filePath, results, fileFilter, dirFilter) {
     console.warn(err);
   } else {
     files.forEach((filename) => {
-      const filedir = path.join(filePath, filename);
+      const filedir = path.posix.join(filePath, filename);
       const stats = fs.statSync(filedir);
       if (!stats) {
         console.warn(`${filedir}: invalid file stats.`);
