@@ -218,7 +218,10 @@ class ThemesGeneratorPlugin {
       return;
     }
     let importContent = '';
-    themesDependencies.forEach(d => (importContent += `@import '../../${d}';\n`));
+    themesDependencies.forEach(d => {
+      let tmpPath = path.normalize(`../../${d}`).split(path.sep).join('/');
+      importContent += `@import '${tmpPath}';\n`;
+    });
     orgFiles.forEach((file) => {
       const fileContent = fs.readFileSync(path.join(themesDir, file)).toString();
       fs.writeFileSync(path.join(TEMP_THEMES_DIR, file), importAfterVariables ? `${fileContent}\n${importContent}` : `${importContent}${fileContent}`);
