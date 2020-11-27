@@ -35,8 +35,7 @@ module.exports = {
       themesDir: 'src/assets/themes',
       outputDir: 'static/css',
       defaultStyleName: 'default.scss',
-      clearTemp: false,
-      importAfterVariables: true
+      clearTemp: false
     })
   ]
 };

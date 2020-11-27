@@ -6,6 +6,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { collectFiles, randomNum, recursiveIssuer } = require('./utils');
 
+const DEFAULT_INGORED_LIST = ['.DS_Store', '.git'];
 const TEMP_DIR = path.resolve(process.cwd(), 'temp');
 const TEMP_THEMES_DIR_NAME = 'themes';
 const TEMP_THEMES_DIR = path.resolve(TEMP_DIR, TEMP_THEMES_DIR_NAME);
@@ -106,7 +107,13 @@ class ThemesGeneratorPlugin {
         if (finalThemes[name]) {
           return `${finalThemes[name]}`;
         }
-        return orgMiniCssExtractPlugin && orgMiniCssExtractPlugin.options.filename ? orgMiniCssExtractPlugin.options.filename : DEFAULT_CSS_OUTPUT_NAME;
+        let fileName = DEFAULT_CSS_OUTPUT_NAME;
+        if (orgMiniCssExtractPlugin && orgMiniCssExtractPlugin.options.chunkFilename) {
+          fileName = orgMiniCssExtractPlugin.options.chunkFilename;
+        } else if (orgMiniCssExtractPlugin && orgMiniCssExtractPlugin.options.filename) {
+          fileName = orgMiniCssExtractPlugin.options.filename;
+        }
+        return fileName;
       };
       if (orgMiniCssExtractPlugin) {
         orgMiniCssExtractPlugin.options.moduleFilename = moduleFilenameFunc;
@@ -178,11 +185,9 @@ class ThemesGeneratorPlugin {
   }
 
   getThemeList() {
-    const { defaultStyleName, useStaticThemeName } = this.options;
-    this.generateThemes();
-    const ignoredFiles = [defaultStyleName || DEFAULT_STYLE_NAME];
+    const { useStaticThemeName } = this.options;
+    const themeFileNames = this.generateThemes();
     const themeList = [];
-    const themeFileNames = fs.readdirSync(TEMP_THEMES_DIR).filter(file => ignoredFiles.indexOf(file) < 0);
     themeFileNames.forEach((fileName) => {
       const index = fileName.lastIndexOf('.');
       const key = index > -1 ? fileName.substr(0, index) : fileName;
@@ -196,7 +201,7 @@ class ThemesGeneratorPlugin {
   }
 
   generateThemes() {
-    const { srcDir, themesDir, defaultStyleName, importAfterVariables } = this.options;
+    const { srcDir, themesDir, defaultStyleName, ignoredFilesInThemesDir = [] } = this.options;
     fs.removeSync(TEMP_DIR);
     const orgFiles = fs.readdirSync(themesDir);
     if (!orgFiles || orgFiles.length === 0) {
@@ -212,17 +217,32 @@ class ThemesGeneratorPlugin {
       return importPattern.test(fileContent);
     });
     if (themesDependencies.length < 1) {
-      orgFiles.forEach((file) => {
-        fs.copyFileSync(path.join(process.cwd(), themesDir, file), path.join(TEMP_THEMES_DIR, file));
-      });
-      return;
+      return [];
     }
     let importContent = '';
-    themesDependencies.forEach(d => (importContent += `@import '../../${d}';\n`));
-    orgFiles.forEach((file) => {
-      const fileContent = fs.readFileSync(path.join(themesDir, file)).toString();
-      fs.writeFileSync(path.join(TEMP_THEMES_DIR, file), importAfterVariables ? `${fileContent}\n${importContent}` : `${importContent}${fileContent}`);
+    const ignoredList = DEFAULT_INGORED_LIST.concat(ignoredFilesInThemesDir);
+    themesDependencies.forEach((d) => {
+      const newFile = path.join(TEMP_THEMES_DIR, d);
+      fs.ensureFileSync(newFile);
+      fs.copyFileSync(path.join(process.cwd(), d), newFile);
+      const fileContent = fs.readFileSync(newFile).toString();
+      const newContent = fileContent.replace(importPattern, '');
+      fs.writeFileSync(newFile, newContent);
+      importContent += `@import './${d}';\n`;
     });
+    const themeFileNames = [];
+    orgFiles.forEach((file) => {
+      if (defaultStyle !== file && ignoredList.indexOf(file) < 0) {
+        themeFileNames.push(file);
+        const fileContent = fs.readFileSync(path.join(themesDir, file)).toString();
+        fs.writeFileSync(path.join(TEMP_THEMES_DIR, file), ThemesGeneratorPlugin.importAfterVariables(file) ? `${fileContent}\n${importContent}` : `${importContent}${fileContent}`);
+      }
+    });
+    return themeFileNames;
+  }
+
+  static importAfterVariables(file) {
+    return file.lastIndexOf('.scss') === file.length - 5 || file.lastIndexOf('.sass') === file.length - 5;
   }
 
   static clearTemp() {
