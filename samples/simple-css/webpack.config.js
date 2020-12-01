@@ -34,7 +34,8 @@ module.exports = {
       srcDir: 'src',
       themesDir: 'src/assets/themes',
       outputDir: 'static/css',
-      defaultStyleName: 'default.css'
+      defaultStyleName: 'default.css',
+      usePureCSS: true
     })
   ]
 };

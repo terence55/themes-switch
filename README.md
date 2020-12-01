@@ -11,6 +11,10 @@
 In the new version `themes-switch` replaces `extract-text-webpack-plugin` with `mini-css-extract-plugin`, and upgrade peerDependency to Webpack 4.3.x. Now the option `themesLoader` is deprecated.
 If you are using Webpack 3.x and `extract-text-webpack-plugin`, [view the docs here](https://github.com/terence55/themes-switch/blob/master/README_webpack_v3.md).
 
+`importAfterVariables` has been removed, and the plugin will automatically recognize this.
+`ignoredFilesInThemesDir` is a new option to ignore files in the theme directory.
+`usePureCSS` is a new option to declare whether to use pure CSS only.
+
 ## Installation
 
 ```bash
@@ -116,9 +120,11 @@ changeTheme('themes-dark', 'css/themes-dark.css');
 | outputDir | Directory of generated files | `{String}` | |
 | defaultStyleName | File name of default style, specify it when you use different style formats | `{String}` | `default` |
 | clearTemp | Delete temp directory when webpack was done | `{Boolean}` | `true` |
-| importAfterVariables | Specify order of imported files and theme variables. It should be set to `true` when you use `sass` | `{Boolean}` | `false` |
 | disable | Disable the plugin | `{Boolean}` | `false` |
 | useStaticThemeName | Whether to add random number to file names of themes | `{Boolean}` | `false` |
+| ignoredFilesInThemesDir | Files that will be ignored in themes directory | `{String}` | |
+| usePureCSS | If you only use pure CSS, you need to explicitly declare | `{Boolean}` | `false` |
+
 
 ## Methods
 

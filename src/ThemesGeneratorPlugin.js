@@ -201,7 +201,8 @@ class ThemesGeneratorPlugin {
   }
 
   generateThemes() {
-    const { srcDir, themesDir, defaultStyleName, ignoredFilesInThemesDir = [] } = this.options;
+    const { srcDir, themesDir, defaultStyleName, ignoredFilesInThemesDir = [], usePureCSS = false } = this.options;
+    const ignoredList = DEFAULT_INGORED_LIST.concat(ignoredFilesInThemesDir);
     fs.removeSync(TEMP_DIR);
     const orgFiles = fs.readdirSync(themesDir);
     if (!orgFiles || orgFiles.length === 0) {
@@ -212,6 +213,17 @@ class ThemesGeneratorPlugin {
     const themesDependencies = [];
     const defaultStyle = defaultStyleName || DEFAULT_STYLE_NAME;
     const importPattern = new RegExp(`@import (.+)${defaultStyle}(.+)`);
+    if (usePureCSS) {
+      const themeFileNames = [];
+      orgFiles.forEach((file) => {
+        if (defaultStyle !== file && ignoredList.indexOf(file) < 0) {
+          themeFileNames.push(file);
+          const fileContent = fs.readFileSync(path.join(themesDir, file)).toString();
+          fs.writeFileSync(path.join(TEMP_THEMES_DIR, file), fileContent);
+        }
+      });
+      return themeFileNames;
+    }
     collectFiles(srcDir, themesDependencies, (file) => {
       const fileContent = fs.readFileSync(file).toString();
       return importPattern.test(fileContent);
@@ -220,7 +232,6 @@ class ThemesGeneratorPlugin {
       return [];
     }
     let importContent = '';
-    const ignoredList = DEFAULT_INGORED_LIST.concat(ignoredFilesInThemesDir);
     themesDependencies.forEach((d) => {
       const newFile = path.join(TEMP_THEMES_DIR, d);
       fs.ensureFileSync(newFile);
@@ -228,7 +239,7 @@ class ThemesGeneratorPlugin {
       const fileContent = fs.readFileSync(newFile).toString();
       const newContent = fileContent.replace(importPattern, '');
       fs.writeFileSync(newFile, newContent);
-      importContent += `@import './${d}';\n`;
+      importContent += `@import '${path.posix.join('./', d)}';\n`;
     });
     const themeFileNames = [];
     orgFiles.forEach((file) => {

@@ -20,8 +20,8 @@ module.exports = {
         include: `${__dirname}/src`
       },
       {
-        test: /\.(scss|sass)$/,
-        loader: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader']
+        test: /\.(less|css)$/,
+        use: [MiniCssExtractPlugin.loader, 'css-loader', 'less-loader']
       }
     ]
   },
@@ -34,7 +34,8 @@ module.exports = {
       srcDir: 'src',
       themesDir: 'src/assets/themes',
       outputDir: 'static/css',
-      defaultStyleName: 'default.scss'
+      defaultStyleName: 'default.less',
+      ignoredFilesInThemesDir: ['unused1.less', 'unused2.less']
     })
   ]
 };

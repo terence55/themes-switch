@@ -14,7 +14,8 @@
     "build-sample:css": "cd samples/simple-css && rm -rf build && webpack",
     "build-sample:less-react": "cd samples/simple-less-react && rm -rf build && webpack",
     "build-sample:less-vue": "cd samples/simple-less-vue && rm -rf build && webpack",
-    "build-sample:less-vue-chunks": "cd samples/simple-less-vue-chunks && rm -rf build && webpack"
+    "build-sample:less-vue-chunks": "cd samples/simple-less-vue-chunks && rm -rf build && webpack",
+    "build-sample:less-ignored-files": "cd samples/simple-less-ignored-files && rm -rf build && webpack"
   },
   "author": "trence320@163.com",
   "license": "MIT",
