@@ -15,7 +15,8 @@
     "build-sample:less-react": "cd samples/simple-less-react && rm -rf build && webpack",
     "build-sample:less-vue": "cd samples/simple-less-vue && rm -rf build && webpack",
     "build-sample:less-vue-chunks": "cd samples/simple-less-vue-chunks && rm -rf build && webpack",
-    "build-sample:less-ignored-files": "cd samples/simple-less-ignored-files && rm -rf build && webpack"
+    "build-sample:less-ignored-files": "cd samples/simple-less-ignored-files && rm -rf build && webpack",
+    "build-sample:less-existing-minicss": "cd samples/simple-less-existing-minicss && rm -rf build && webpack"
   },
   "author": "trence320@163.com",
   "license": "MIT",
@@ -48,7 +49,7 @@
     "html-webpack-plugin": "^3.2.0",
     "less": "^3.10.3",
     "less-loader": "^5.0.0",
-    "mini-css-extract-plugin": "^0.7.0",
+    "mini-css-extract-plugin": "^1.3.3",
     "mocha": "^7.0.0",
     "node-sass": "^4.13.1",
     "postcss-cssnext": "^3.1.0",

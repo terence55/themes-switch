@@ -3,6 +3,7 @@ const fs = require('fs-extra');
 const webpack = require('webpack');
 const EntryPlugin = require('webpack/lib/SingleEntryPlugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const MiniCssExtractPluginOptions = require('mini-css-extract-plugin/dist/plugin-options.json');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { collectFiles, randomNum, recursiveIssuer } = require('./utils');
 
@@ -13,7 +14,7 @@ const TEMP_THEMES_DIR = path.resolve(TEMP_DIR, TEMP_THEMES_DIR_NAME);
 const DEFAULT_STYLE_NAME = 'default';
 const pluginInfo = { name: 'ThemesGeneratorPlugin' };
 const DEFAULT_THEME_OUTPUT_DIR = 'static/theme/';
-const DEFAULT_CSS_OUTPUT_NAME = '[name]-[hash].css';
+const DEFAULT_CSS_OUTPUT_NAME = '[name]-[contenthash].css';
 
 class ThemesGeneratorPlugin {
   constructor(options) {
@@ -96,6 +97,7 @@ class ThemesGeneratorPlugin {
       }
 
       let orgMiniCssExtractPlugin;
+      let orgFilename;
       if (compiler.options.plugins && compiler.options.plugins.length > 0) {
         compiler.options.plugins.forEach((plugin) => {
           if (plugin instanceof MiniCssExtractPlugin) {
@@ -103,23 +105,31 @@ class ThemesGeneratorPlugin {
           }
         });
       }
-      const moduleFilenameFunc = ({ name }) => {
+      const isMiniCssOldVer = typeof MiniCssExtractPluginOptions.properties.moduleFilename !== 'undefined';
+      const filenameField = isMiniCssOldVer ? 'moduleFilename' : 'filename';
+      if (orgMiniCssExtractPlugin) {
+        orgFilename = orgMiniCssExtractPlugin.options[filenameField];
+      }
+      const moduleFilenameFunc = (pathData) => {
+        const name = isMiniCssOldVer ? pathData.name : pathData.chunk.name;
         if (finalThemes[name]) {
           return `${finalThemes[name]}`;
         }
         let fileName = DEFAULT_CSS_OUTPUT_NAME;
-        if (orgMiniCssExtractPlugin && orgMiniCssExtractPlugin.options.chunkFilename) {
-          fileName = orgMiniCssExtractPlugin.options.chunkFilename;
-        } else if (orgMiniCssExtractPlugin && orgMiniCssExtractPlugin.options.filename) {
-          fileName = orgMiniCssExtractPlugin.options.filename;
+        if (orgMiniCssExtractPlugin && orgFilename) {
+          if (typeof orgFilename !== 'function') {
+            fileName = orgFilename;
+          } else {
+            fileName = orgFilename(pathData);
+          }
         }
         return fileName;
       };
       if (orgMiniCssExtractPlugin) {
-        orgMiniCssExtractPlugin.options.moduleFilename = moduleFilenameFunc;
+        orgMiniCssExtractPlugin.options[filenameField] = moduleFilenameFunc;
       } else {
         const miniCssExtractPlugin = new MiniCssExtractPlugin({
-          moduleFilename: moduleFilenameFunc
+          [filenameField]: moduleFilenameFunc
         });
         if (webpackNewVer) {
           miniCssExtractPlugin.apply(compiler);
