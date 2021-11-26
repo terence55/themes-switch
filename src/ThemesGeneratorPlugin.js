@@ -142,10 +142,11 @@ class ThemesGeneratorPlugin {
         const excludeThemeChunks = themeList.map(theme => theme.key);
         compiler.options.plugins.forEach((plugin) => {
           if (plugin instanceof HtmlWebpackPlugin) {
-            if (plugin.options.excludeChunks) {
-              plugin.options.excludeChunks = [...excludeThemeChunks, ...plugin.options.excludeChunks];
+            const optionFieldName = plugin.version >=5 ? 'userOptions' : 'options'
+            if (plugin[optionFieldName].excludeChunks) {
+              plugin[optionFieldName].excludeChunks = [...excludeThemeChunks, ...plugin[optionFieldName].excludeChunks];
             } else {
-              plugin.options.excludeChunks = excludeThemeChunks;
+              plugin[optionFieldName].excludeChunks = excludeThemeChunks;
             }
           }
         });
