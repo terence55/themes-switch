@@ -3,12 +3,13 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ThemesGeneratorPlugin = require('../../src/ThemesGeneratorPlugin');
 
 module.exports = {
+  mode: 'production',
   entry: {
     main: './src/main.js'
   },
   output: {
-    filename: '[name]-[hash].js',
-    chunkFilename: '[name]-[hash].js',
+    filename: '[name]-[contenthash].js',
+    chunkFilename: '[name]-[contenthash].js',
     path: `${__dirname}/build`,
     publicPath: ''
   },
@@ -21,7 +22,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        loader: [MiniCssExtractPlugin.loader, 'css-loader']
+        use: [MiniCssExtractPlugin.loader, 'css-loader']
       }
     ]
   },

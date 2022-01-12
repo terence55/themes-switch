@@ -1,10 +1,9 @@
-import { changeTheme } from '../../../src/index';
+import { switchTheme, getThemes } from '../../../src/index';
 
 import './main.scss';
 
-const themes = process.themes; // eslint-disable-line prefer-destructuring
+const themes = getThemes();
 const buttonsContainer = document.getElementById('buttons');
-let currentLink;
 
 const title = document.createElement('div');
 title.innerHTML = 'Title';
@@ -21,7 +20,7 @@ keys.forEach((key) => {
   const button = document.createElement('button');
   button.innerHTML = key;
   button.onclick = () => {
-    changeTheme(key, themes[key], currentLink, link => (currentLink = link));
+    switchTheme({ theme: key });
   };
   buttonsContainer.appendChild(button);
 });

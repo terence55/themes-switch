@@ -6,7 +6,7 @@
       <div id='buttons'>
         <div class="title">Title</div>
         <div class="desc">Description</div>
-        <div v-for="item in Object.keys(themes)" :key="item.clmuCode">
+        <div v-for="item in Object.keys(themes)" :key="item">
           <button v-on:click="changeTheme(item)">{{item}}</button>
         </div>
       </div>
@@ -16,18 +16,18 @@
 
 <script>
 import './User.less';
-import { changeTheme } from '../../../../../src/index';
+import { switchTheme, getThemes } from '../../../../../src/index';
 
 export default {
   name: 'User',
   data() {
     return {
-      themes: process.themes
+      themes: getThemes()
     }
   },
   methods: {
     changeTheme(key) {
-      changeTheme(key, this.themes[key])
+      switchTheme({theme: key})
     },
     gotoHome() {
       this.$router.push('/home');

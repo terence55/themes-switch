@@ -22,225 +22,109 @@ class ThemesGeneratorPlugin {
   }
 
   apply(compiler) {
-    const { clearTemp = true, disable, srcDir, themesDir, outputDir } = this.options;
+    const { clearTemp = true, disable, srcDir, themesDir, outputDir, enableHotReload = false } = this.options;
     if (disable) {
       return;
     }
     if (!srcDir) {
-      console.log('srcDir can not be empty');
+      console.log('themes-switch will not work, srcDir can not be empty');
       return;
     }
     if (!themesDir) {
-      console.log('themesDir can not be empty');
+      console.log('themes-switch will not work, themesDir can not be empty');
       return;
     }
     if (!outputDir) {
-      console.log('outputDir can not be empty');
+      console.log('themes-switch will not work, outputDir can not be empty');
       return;
     }
-    const themeList = this.getThemeList();
-    const webpackNewVer = 'hooks' in compiler;
-    const onEntryOption = (context) => {
-      if (typeof compiler.options.entry !== 'object') {
-        console.log('Entry must be an object if ThemesGeneratorPlugin was used!');
-        return;
-      }
-      console.log('Themes generating started...');
-
-      const finalThemes = {};
-      const publicPath = compiler.options.output && compiler.options.output.publicPath ? compiler.options.output.publicPath : '';
-
-      if (themeList && themeList.length > 0) {
-        if (!compiler.options.optimization) {
-          compiler.options.optimization = {};
-        }
-        if (!compiler.options.optimization.splitChunks) {
-          compiler.options.optimization.splitChunks = {};
-        }
-        if (!compiler.options.optimization.splitChunks.cacheGroups) {
-          compiler.options.optimization.splitChunks.cacheGroups = {};
-        }
-
-        themeList.forEach((theme) => {
-          const entryPlugin = new EntryPlugin(
-            this.context || context,
-            theme.path,
-            theme.key
-          );
-          if (webpackNewVer) {
-            entryPlugin.apply(compiler);
-          } else {
-            compiler.apply(entryPlugin);
-          }
-
-          compiler.options.optimization.splitChunks.cacheGroups[theme.key] = {
-            test: (m, c, entry = theme.key) => m.constructor.name === 'CssModule' && recursiveIssuer(m) === entry,
-            chunks: 'all',
-            enforce: true
-          };
-
-          let finalOutputDir = outputDir || DEFAULT_THEME_OUTPUT_DIR;
-          finalOutputDir = finalOutputDir.endsWith('/') ? finalOutputDir : `${finalOutputDir}/`;
-          finalThemes[theme.key] = publicPath ? `${publicPath}${publicPath.endsWith('/') ? '' : '/'}${finalOutputDir}${theme.outputName}` : `${finalOutputDir}${theme.outputName}`;
-        });
-      }
-
-      const definePlugin = new webpack.DefinePlugin({
-        process: {
-          themes: JSON.stringify(finalThemes)
+    ThemesGeneratorPlugin.clearTemp();
+    console.log('Themes generating started...');
+    const themeList = this.getThemes();
+    hookThemesOptions({ compiler, themeList, outputDir });
+    hookOnBeforeRun({ compiler, themeList });
+    const shouldUseProcessAssets = typeof compiler.webpack !== 'undefined' && typeof compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL !== 'undefined';
+    if (!shouldUseProcessAssets) {
+      hookOnEmit({ compiler, themeList });
+    } else {
+      compiler.hooks.thisCompilation.tap(pluginInfo, (compilation) => {
+        if (shouldUseProcessAssets) {
+          hookOnProcessAssets({ compiler, themeList, compilation });
         }
       });
-      if (webpackNewVer) {
-        definePlugin.apply(compiler);
-      } else {
-        compiler.apply(definePlugin);
-      }
-
-      let orgMiniCssExtractPlugin;
-      let orgFilename;
-      if (compiler.options.plugins && compiler.options.plugins.length > 0) {
-        compiler.options.plugins.forEach((plugin) => {
-          if (plugin instanceof MiniCssExtractPlugin) {
-            orgMiniCssExtractPlugin = plugin;
-          }
-        });
-      }
-      const isMiniCssOldVer = typeof MiniCssExtractPluginOptions.properties.moduleFilename !== 'undefined';
-      const filenameField = isMiniCssOldVer ? 'moduleFilename' : 'filename';
-      if (orgMiniCssExtractPlugin) {
-        orgFilename = orgMiniCssExtractPlugin.options[filenameField];
-      }
-      const moduleFilenameFunc = (pathData) => {
-        const name = isMiniCssOldVer ? pathData.name : pathData.chunk.name;
-        if (finalThemes[name]) {
-          return `${finalThemes[name]}`;
-        }
-        let fileName = DEFAULT_CSS_OUTPUT_NAME;
-        if (orgMiniCssExtractPlugin && orgFilename) {
-          if (typeof orgFilename !== 'function') {
-            fileName = orgFilename;
-          } else {
-            fileName = orgFilename(pathData);
-          }
-        }
-        return fileName;
-      };
-      if (orgMiniCssExtractPlugin) {
-        orgMiniCssExtractPlugin.options[filenameField] = moduleFilenameFunc;
-      } else {
-        const miniCssExtractPlugin = new MiniCssExtractPlugin({
-          [filenameField]: moduleFilenameFunc
-        });
-        if (webpackNewVer) {
-          miniCssExtractPlugin.apply(compiler);
-        } else {
-          compiler.apply(miniCssExtractPlugin);
-        }
-      }
-
-      if (compiler.options.plugins && compiler.options.plugins.length > 0) {
-        const excludeThemeChunks = themeList.map(theme => theme.key);
-        compiler.options.plugins.forEach((plugin) => {
-          if (plugin instanceof HtmlWebpackPlugin) {
-            const optionFieldName = plugin.version >=5 ? 'userOptions' : 'options'
-            if (plugin[optionFieldName].excludeChunks) {
-              plugin[optionFieldName].excludeChunks = [...excludeThemeChunks, ...plugin[optionFieldName].excludeChunks];
-            } else {
-              plugin[optionFieldName].excludeChunks = excludeThemeChunks;
-            }
-          }
-        });
-      }
-    };
-    const onEmit = (compilation, callback) => {
-      const stats = compilation.getStats().toJson();
-      if (themeList && themeList.length > 0) {
-        themeList.forEach((theme) => {
-          const outputByThemes = stats.assetsByChunkName[theme.key];
-          if (outputByThemes) {
-            const pattern = new RegExp(`^${theme.key}(.*).(js|css)`);
-            if (Array.isArray(outputByThemes)) {
-              outputByThemes.forEach((fileName) => {
-                if (pattern.test(fileName) && compilation.assets[fileName]) {
-                  delete compilation.assets[fileName];
-                }
-              });
-            } else if (typeof outputByThemes === 'string') {
-              if (pattern.test(outputByThemes) && compilation.assets[outputByThemes]) {
-                delete compilation.assets[outputByThemes];
-              }
-            }
-          }
-        });
-      }
-      if (callback && typeof callback === 'function') {
-        callback();
-      }
-    };
-    const onDone = () => {
-      fs.removeSync(TEMP_DIR);
-    };
-    if (webpackNewVer) {
-      compiler.hooks.entryOption.tap(pluginInfo, onEntryOption);
-      compiler.hooks.emit.tapAsync(pluginInfo, onEmit);
-      if (clearTemp) {
-        compiler.hooks.done.tap(pluginInfo, onDone);
-      }
+    }
+    if (!enableHotReload || !process.env.WEBPACK_DEV_SERVER) {
+      this.generateThemes(themeList);
     } else {
-      compiler.plugin('entry-option', onEntryOption);
-      compiler.plugin('emit', onEmit);
-      if (clearTemp) {
-        compiler.plugin('done', onDone);
-      }
+      compiler.hooks.watchRun.tap(pluginInfo, (comp) => {
+        const changedTimes = comp.watchFileSystem.watcher.mtimes;
+        if (Object.keys(changedTimes).length > 0) {
+          const filename = Object.keys(changedTimes)[0]; // eslint-disable-line prefer-destructuring
+          if (filename && filename.startsWith(TEMP_THEMES_DIR)) {
+            return;
+          }
+        }
+        this.generateThemes(themeList);
+      });
+    }
+    const onDone = () => {
+      ThemesGeneratorPlugin.clearTemp();
+    };
+    if (clearTemp) {
+      compiler.hooks.done.tap(pluginInfo, onDone);
     }
   }
 
-  getThemeList() {
+  getThemes() {
     const { useStaticThemeName } = this.options;
-    const themeFileNames = this.generateThemes();
+    const themeFileNames = this.collectOrgThemeFiles();
     const themeList = [];
     themeFileNames.forEach((fileName) => {
       const index = fileName.lastIndexOf('.');
-      const key = index > -1 ? fileName.substr(0, index) : fileName;
+      const key = index > -1 ? fileName.substring(0, index) : fileName;
       themeList.push({
         key: `theme-${key}`,
         path: path.resolve(TEMP_THEMES_DIR, fileName),
-        outputName: useStaticThemeName ? `theme-${key}.css` : `theme-${key}-${randomNum(10000000, 99999999)}.css`
+        outputName: useStaticThemeName ? `theme-${key}.css` : `theme-${key}-${randomNum(10000000, 99999999)}.css`,
+        orgFile: fileName
       });
     });
     return themeList;
   }
 
-  generateThemes() {
-    const { srcDir, themesDir, defaultStyleName, ignoredFilesInThemesDir = [], usePureCSS = false } = this.options;
+  collectOrgThemeFiles() {
+    const { themesDir, defaultStyleName, ignoredFilesInThemesDir = [] } = this.options;
+    const defaultStyle = defaultStyleName || DEFAULT_STYLE_NAME;
     const ignoredList = DEFAULT_INGORED_LIST.concat(ignoredFilesInThemesDir);
-    fs.removeSync(TEMP_DIR);
     const orgFiles = fs.readdirSync(themesDir);
     if (!orgFiles || orgFiles.length === 0) {
-      console.warn('No themes');
-      return;
+      console.warn('No themes found');
+      return [];
     }
+    return orgFiles.filter(file => defaultStyle !== file && ignoredList.indexOf(file) < 0);
+  }
+
+  generateThemes(themeList) {
+    const { srcDir, themesDir, defaultStyleName, usePureCSS = false } = this.options;
+    const defaultStyle = defaultStyleName || DEFAULT_STYLE_NAME;
+    ThemesGeneratorPlugin.clearTemp();
     fs.ensureDirSync(TEMP_THEMES_DIR);
     const themesDependencies = [];
-    const defaultStyle = defaultStyleName || DEFAULT_STYLE_NAME;
-    const importPattern = new RegExp(`@import (.+)${defaultStyle}(.+)`);
     if (usePureCSS) {
-      const themeFileNames = [];
-      orgFiles.forEach((file) => {
-        if (defaultStyle !== file && ignoredList.indexOf(file) < 0) {
-          themeFileNames.push(file);
-          const fileContent = fs.readFileSync(path.join(themesDir, file)).toString();
-          fs.writeFileSync(path.join(TEMP_THEMES_DIR, file), fileContent);
-        }
+      themeList.forEach((theme) => {
+        const fileContent = fs.readFileSync(path.join(themesDir, theme.orgFile)).toString();
+        fs.writeFileSync(path.join(TEMP_THEMES_DIR, theme.orgFile), fileContent);
       });
-      return themeFileNames;
+      return;
     }
+    const importPattern = new RegExp(`@import (.+)${defaultStyle}(.+)`);
     collectFiles(srcDir, themesDependencies, (file) => {
       const fileContent = fs.readFileSync(file).toString();
       return importPattern.test(fileContent);
     });
     if (themesDependencies.length < 1) {
-      return [];
+      console.warn('No theme files are used');
+      return;
     }
     let importContent = '';
     themesDependencies.forEach((d) => {
@@ -252,24 +136,183 @@ class ThemesGeneratorPlugin {
       fs.writeFileSync(newFile, newContent);
       importContent += `@import '${path.posix.join('./', d)}';\n`;
     });
-    const themeFileNames = [];
-    orgFiles.forEach((file) => {
-      if (defaultStyle !== file && ignoredList.indexOf(file) < 0) {
-        themeFileNames.push(file);
-        const fileContent = fs.readFileSync(path.join(themesDir, file)).toString();
-        fs.writeFileSync(path.join(TEMP_THEMES_DIR, file), ThemesGeneratorPlugin.importAfterVariables(file) ? `${fileContent}\n${importContent}` : `${importContent}${fileContent}`);
-      }
+    themeList.forEach((theme) => {
+      const fileContent = fs.readFileSync(path.join(themesDir, theme.orgFile)).toString();
+      fs.writeFileSync(path.join(TEMP_THEMES_DIR, theme.orgFile), importAfterVariables(theme.orgFile) ? `${fileContent}\n${importContent}` : `${importContent}${fileContent}`);
     });
-    return themeFileNames;
-  }
-
-  static importAfterVariables(file) {
-    return file.lastIndexOf('.scss') === file.length - 5 || file.lastIndexOf('.sass') === file.length - 5;
   }
 
   static clearTemp() {
     fs.removeSync(TEMP_DIR);
   }
+}
+
+function hookThemesOptions({ compiler, themeList, outputDir }) {
+  const onEntryOption = (context) => {
+    const themesUrl = {};
+    const themesFilename = {};
+    const publicPath = compiler.options.output && compiler.options.output.publicPath ? compiler.options.output.publicPath : '';
+    if (themeList && themeList.length > 0) {
+      if (!compiler.options.optimization) {
+        compiler.options.optimization = {};
+      }
+      if (!compiler.options.optimization.splitChunks) {
+        compiler.options.optimization.splitChunks = {};
+      }
+      if (!compiler.options.optimization.splitChunks.cacheGroups) {
+        compiler.options.optimization.splitChunks.cacheGroups = {};
+      }
+      themeList.forEach((theme) => {
+        const entryPlugin = new EntryPlugin(
+          context,
+          theme.path,
+          theme.key
+        );
+        entryPlugin.apply(compiler);
+        compiler.options.optimization.splitChunks.cacheGroups[theme.key] = {
+          test: (m, c, entry = theme.key) => m.constructor.name === 'CssModule' && recursiveIssuer(m) === entry,
+          chunks: 'all',
+          enforce: true
+        };
+        let finalOutputDir = outputDir || DEFAULT_THEME_OUTPUT_DIR;
+        finalOutputDir = finalOutputDir.endsWith('/') ? finalOutputDir : `${finalOutputDir}/`;
+        themesFilename[theme.key] = `${finalOutputDir}${theme.outputName}`;
+        if (publicPath === '') {
+          themesUrl[theme.key] = `${finalOutputDir}${theme.outputName}`;
+        } else {
+          themesUrl[theme.key] = `${publicPath.endsWith('/') ? publicPath : `${publicPath}/`}${finalOutputDir}${theme.outputName}`;
+        }
+      });
+    }
+
+    const definePlugin = new webpack.DefinePlugin({
+      process: {
+        themes: JSON.stringify(themesUrl)
+      }
+    });
+    definePlugin.apply(compiler);
+
+    let orgMiniCssExtractPlugin;
+    let orgFilename;
+    if (compiler.options.plugins && compiler.options.plugins.length > 0) {
+      compiler.options.plugins.forEach((plugin) => {
+        if (plugin instanceof MiniCssExtractPlugin) {
+          orgMiniCssExtractPlugin = plugin;
+        }
+      });
+    }
+    const isMiniCssOldVer = typeof MiniCssExtractPluginOptions.properties.moduleFilename !== 'undefined';
+    const filenameField = isMiniCssOldVer ? 'moduleFilename' : 'filename';
+    if (orgMiniCssExtractPlugin) {
+      orgFilename = orgMiniCssExtractPlugin.options[filenameField];
+    }
+    const moduleFilenameFunc = (pathData) => {
+      const name = isMiniCssOldVer ? pathData.name : pathData.chunk.name;
+      if (themesFilename[name]) {
+        return themesFilename[name];
+      }
+      let fileName = DEFAULT_CSS_OUTPUT_NAME;
+      if (orgMiniCssExtractPlugin && orgFilename) {
+        if (typeof orgFilename !== 'function') {
+          fileName = orgFilename;
+        } else {
+          fileName = orgFilename(pathData);
+        }
+      }
+      return fileName;
+    };
+    if (orgMiniCssExtractPlugin) {
+      orgMiniCssExtractPlugin.options[filenameField] = moduleFilenameFunc;
+    } else {
+      const miniCssExtractPlugin = new MiniCssExtractPlugin({
+        [filenameField]: moduleFilenameFunc
+      });
+      miniCssExtractPlugin.apply(compiler);
+    }
+  };
+  compiler.hooks.entryOption.tap(pluginInfo, onEntryOption);
+}
+
+function hookOnBeforeRun({ compiler, themeList }) {
+  const onBeforeRun = (c) => {
+    if (!c.options.plugins && c.options.plugins.length < 1) {
+      return;
+    }
+    const excludeThemeChunks = themeList.map(theme => theme.key);
+    c.options.plugins.forEach((plugin) => {
+      if (plugin instanceof HtmlWebpackPlugin) {
+        if (plugin.options.excludeChunks) {
+          plugin.options.excludeChunks = [...excludeThemeChunks, ...plugin.options.excludeChunks];
+        } else {
+          plugin.options.excludeChunks = excludeThemeChunks;
+        }
+      }
+    });
+  };
+  compiler.hooks.beforeRun.tap(pluginInfo, onBeforeRun);
+}
+
+function hookOnEmit({ compiler, themeList }) {
+  const onEmit = (compilation, callback) => {
+    const stats = compilation.getStats().toJson();
+    if (themeList && themeList.length > 0) {
+      themeList.forEach((theme) => {
+        const outputByThemes = stats.assetsByChunkName[theme.key];
+        const pattern = getUnusedFilePattern({ key: theme.key, compiler });
+        if (outputByThemes) {
+          if (Array.isArray(outputByThemes)) {
+            outputByThemes.forEach((fileName) => {
+              if (pattern.test(fileName) && compilation.assets[fileName]) {
+                delete compilation.assets[fileName];
+              }
+            });
+          } else if (typeof outputByThemes === 'string') {
+            if (pattern.test(outputByThemes) && compilation.assets[outputByThemes]) {
+              delete compilation.assets[outputByThemes];
+            }
+          }
+        }
+      });
+    }
+    if (callback && typeof callback === 'function') {
+      callback();
+    }
+  };
+  compiler.hooks.emit.tapAsync(pluginInfo, onEmit);
+}
+
+function hookOnProcessAssets({ compiler, themeList, compilation }) {
+  const onProcessAssets = (assets) => {
+    const keys = Object.keys(assets);
+    if (themeList && themeList.length > 0) {
+      themeList.forEach((theme) => {
+        const pattern = getUnusedFilePattern({ key: theme.key, compiler });
+        keys.forEach((key) => {
+          if (pattern.test(key)) {
+            compilation.deleteAsset(key);
+          }
+        });
+      });
+    }
+  };
+  compilation.hooks.processAssets.tap(
+    {
+      name: pluginInfo.name,
+      stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL
+    }, onProcessAssets);
+}
+
+function getUnusedFilePattern({ key, compiler }) {
+  const outputFilename = compiler.options.output && compiler.options.output.filename ? compiler.options.output.filename : '';
+  const outputDir = outputFilename.substring(0, outputFilename.lastIndexOf('/'));
+  if (!outputDir) {
+    return new RegExp(`^${key}(.*).js`);
+  }
+  return new RegExp(`^${outputDir}/${key}(.*).js`);
+}
+
+function importAfterVariables(file) {
+  return file.lastIndexOf('.scss') === file.length - 5 || file.lastIndexOf('.sass') === file.length - 5;
 }
 
 module.exports = ThemesGeneratorPlugin;

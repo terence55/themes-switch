@@ -15,8 +15,13 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.js$/,
+        use: ['babel-loader'],
+        include: `${__dirname}/src`
+      },
+      {
         test: /\.css$/,
-        loader: [MiniCssExtractPlugin.loader, 'css-loader']
+        use: [MiniCssExtractPlugin.loader, 'css-loader']
       }
     ]
   },
@@ -33,7 +38,8 @@ module.exports = {
       themesDir: 'src/assets/themes',
       outputDir: 'static/css',
       defaultStyleName: 'default.css',
-      useStaticThemeName: true
+      useStaticThemeName: true,
+      usePureCSS: true
     })
   ]
 };

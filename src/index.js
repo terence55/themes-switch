@@ -2,7 +2,10 @@ const THEME_KEY = 'theme';
 const PLUGIN_KEY = 'pkey';
 const PLUGIN_VALUE = 'themes-switch';
 
-function changeTheme(theme, themeUrl, onLoad) {
+const themes = process.themes; // eslint-disable-line prefer-destructuring
+
+function switchTheme({ theme, onLoad }) {
+  const themeUrl = themes[theme];
   const container = document.html || document.getElementsByTagName('html')[0];
   const links = container.getElementsByTagName('link');
   let oldTheme;
@@ -28,6 +31,14 @@ function changeTheme(theme, themeUrl, onLoad) {
   };
 }
 
+function getThemes() {
+  return themes;
+}
+
+function changeTheme(theme, themeUrl, onLoad) {
+  switchTheme({ theme, onLoad });
+}
+
 function removeNode(node) {
   if (node && node.parentNode) {
     node.parentNode.removeChild(node);
@@ -50,5 +61,7 @@ function setAttribute(element, key, value) {
 }
 
 module.exports = {
-  changeTheme: changeTheme // eslint-disable-line object-shorthand
+  changeTheme,
+  switchTheme,
+  getThemes
 };

@@ -15,8 +15,13 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.js$/,
+        use: ['babel-loader'],
+        include: `${__dirname}/src`
+      },
+      {
         test: /\.(scss|sass)$/,
-        loader: [MiniCssExtractPlugin.loader, 'css-loader',
+        use: [MiniCssExtractPlugin.loader, 'css-loader',
         {
           loader: 'sass-loader',
           options: {

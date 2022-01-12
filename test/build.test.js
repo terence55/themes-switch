@@ -3,9 +3,9 @@ var fs = require('fs-extra');
 var mocha = require('mocha');
 var shell = require('shelljs');
 var glob = require('glob');
-var webpack = require('webpack');
 var it = mocha.it;
 var expect = require('chai').expect;
+var assert = require('chai').assert;
 
 mocha.describe('-----Build Test-----', function () {
   beforeEach(function() {
@@ -38,6 +38,7 @@ function testBuild(srcName, expectName, callback) {
   var actualDir = path.join(__dirname, 'src', srcName, 'build');
   fs.removeSync(actualDir);
   shell.cd(baseDir);
+  var webpack = require('webpack');
   var configFile = path.join(baseDir, 'webpack.config.js');
   var config = require(configFile);
   webpack(config, function (err, stats) {
