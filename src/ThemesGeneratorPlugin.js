@@ -3,9 +3,16 @@ const fs = require('fs-extra');
 const webpack = require('webpack');
 const EntryPlugin = require('webpack/lib/SingleEntryPlugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const MiniCssExtractPluginOptions = require('mini-css-extract-plugin/dist/plugin-options.json');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { collectFiles, randomNum, recursiveIssuer } = require('./utils');
+
+let MiniCssExtractPluginOptions;
+try {
+  MiniCssExtractPluginOptions = require('mini-css-extract-plugin/dist/plugin-options.json');
+} catch (e) {
+  console.log('Can\'t find plugin-options.json in dist of mini-css-extract-plugin');
+}
+const isMiniCssOldVer = typeof MiniCssExtractPluginOptions === 'undefined' || typeof MiniCssExtractPluginOptions.properties.moduleFilename !== 'undefined';
 
 const DEFAULT_INGORED_LIST = ['.DS_Store', '.git'];
 const TEMP_DIR = path.resolve(process.cwd(), 'temp');
@@ -201,7 +208,6 @@ function hookThemesOptions({ compiler, themeList, outputDir }) {
         }
       });
     }
-    const isMiniCssOldVer = typeof MiniCssExtractPluginOptions.properties.moduleFilename !== 'undefined';
     const filenameField = isMiniCssOldVer ? 'moduleFilename' : 'filename';
     if (orgMiniCssExtractPlugin) {
       orgFilename = orgMiniCssExtractPlugin.options[filenameField];
