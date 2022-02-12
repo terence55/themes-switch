@@ -1,10 +1,11 @@
 const path = require('path');
 const fs = require('fs-extra');
 const webpack = require('webpack');
+const sast = require('sast');
 const EntryPlugin = require('webpack/lib/SingleEntryPlugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { collectFiles, randomNum, recursiveIssuer } = require('./utils');
+const { collectFiles, randomNum, recursiveIssuer, simplifyCss } = require('./utils');
 
 let MiniCssExtractPluginOptions;
 try {
@@ -139,8 +140,10 @@ class ThemesGeneratorPlugin {
       fs.ensureFileSync(newFile);
       fs.copyFileSync(path.join(process.cwd(), d), newFile);
       const fileContent = fs.readFileSync(newFile).toString();
-      const newContent = fileContent.replace(importPattern, '');
-      fs.writeFileSync(newFile, newContent);
+      const astTree = sast.parse(fileContent, { syntax: path.extname(newFile).replace('.', '') });
+      simplifyCss(astTree);
+      const newContent = sast.jsonify(astTree).replace(/\$/g, '@');
+      fs.writeFileSync(newFile, newContent.replace(importPattern, ''));
       importContent += `@import '${path.posix.join('./', d)}';\n`;
     });
     themeList.forEach((theme) => {
