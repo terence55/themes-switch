@@ -7,18 +7,20 @@
 - Themes switch without page reload.
 - Supported formats: `css`, `less`, `postcss`, `sass`.
 
-## Changes
-In the new version `themes-switch` replaces `extract-text-webpack-plugin` with `mini-css-extract-plugin`, and upgrade peerDependency to Webpack 4.3.x. Now the option `themesLoader` is deprecated.
-If you are using Webpack 3.x and `extract-text-webpack-plugin`, [view the docs here](https://github.com/terence55/themes-switch/blob/master/README_webpack_v3.md).
+## For Hot reload
+- Hot-reload is supported in v1.1.x, new theme files will be generated when a reload is triggered.
+- When hot-reload is enabled, the temp directory will not be cleared if webpack-dev-server was running.
+- To improve performance, dynamic addition of new theme files is not supported, please restart the server when adding new files.
 
-`importAfterVariables` has been removed, and the plugin will automatically recognize this.
-`ignoredFilesInThemesDir` is a new option to ignore files in the theme directory.
-`usePureCSS` is a new option to declare whether to use pure CSS only.
+## For Webpack v3
+- Webpack v3 is no longer supported from v1.1.x, please use v1.0.x instead.
+- In the version `v1.0.7` `themes-switch` replaces `extract-text-webpack-plugin` with `mini-css-extract-plugin`, and upgrade peerDependency to Webpack 4.3.x. Now the option `themesLoader` is deprecated.
+If you are using Webpack 3.x and `extract-text-webpack-plugin`, [view the docs here](https://github.com/terence55/themes-switch/blob/master/README_webpack_v3.md).
 
 ## Installation
 
 ```bash
-npm install themes-switch --save
+npm install themes-switch --save-dev
 ```
     
 ## Usage
@@ -34,8 +36,8 @@ module.exports = {
     main: './src/main.js'
   },
   output: {
-    filename: '[name]-[hash].js',
-    chunkFilename: '[name]-[hash].js',
+    filename: '[name]-[contenthash].js',
+    chunkFilename: '[name]-[contenthash].js',
     path: `${__dirname}/build`,
     publicPath: ''
   },
@@ -82,9 +84,7 @@ src
 @color-text: #FFF;
 ```
 
-> When you use sass, you should add default flag to default theme variables, such as `$color-main: #0A6EFA !default;`.
-
-- Import `default.less` when you use theme variables:
+- Import `default.less` when using theme variables:
 
 ```css
 @import 'default.less';
@@ -96,19 +96,26 @@ src
 
 - `ThemesGeneratorPlugin` scans files in `themesDir` and files that import `default.less`, then generates separated files for all themes automatically.
 
-- You can access the themes info via `process.themes` in your code, value such as `{ 'theme-dark': 'css/dark.css', 'theme-light': 'css/light.css' }`.
+- You can access the themes info via `process.themes` in your code, value such as `{ 'theme-dark': 'css/dark.css', 'theme-light': 'css/light.css' }`, or call `getThemes` method directly.
 
-- Call `changeTheme` method to switch to new theme by pass theme name and url.
+```js
+import { getThemes } from 'themes-switch';
+
+// ...
+const themes = getThemes();
+// ...
+```
+
+- Call `switchTheme` method to switch to new theme by pass theme name.
 
 Switch themes in your code
 
 ```js
-import { changeTheme } from 'themes-switch';
+import { switchTheme } from 'themes-switch';
 
 // ...
-changeTheme('themes-dark', 'css/themes-dark.css');
+switchTheme({ theme: 'themes-dark' });
 // ...
-
 ```
 
 ## Options
@@ -124,15 +131,33 @@ changeTheme('themes-dark', 'css/themes-dark.css');
 | useStaticThemeName | Whether to add random number to file names of themes | `{Boolean}` | `false` |
 | ignoredFilesInThemesDir | Files that will be ignored in themes directory | `{String}` | |
 | usePureCSS | If you only use pure CSS, you need to explicitly declare | `{Boolean}` | `false` |
+| enableHotReload | Whether to generate new files for webpack hot reload | `{Boolean}` | `false` |
 
 
 ## Methods
 
-### changeTheme
+### switchTheme
+```js
+switchTheme({ theme: 'themes-dark', onLoad: onLoadFunc });
+```
+Options
+- theme: new theme name, such as `theme-dark`.
+- onLoad: callback when new link was loaded.
 
+### changeTheme
+```js
+changeTheme('themes-dark', 'css/dark.css', onLoadFunc);
+```
+Options
 - theme: new theme name, such as `theme-dark`.
 - themeUrl: new theme url, such as `css/dark.css`. You can get the value from `process.themes`
 - onLoad: callback when new link was loaded.
+
+### getThemes
+```js
+const themes = getThemes();
+// { 'theme-dark': 'css/dark.css', 'theme-light': 'css/light.css' }
+```
 
 ### ThemesGeneratorPlugin.clearTemp
 
