@@ -17,7 +17,8 @@
     "build-sample:less-vue-chunks": "cd samples/simple-less-vue-chunks && rm -rf build && webpack",
     "build-sample:less-ignored-files": "cd samples/simple-less-ignored-files && rm -rf build && webpack",
     "build-sample:less-existing-minicss": "cd samples/simple-less-existing-minicss && rm -rf build && webpack",
-    "build-sample:less-deprecated-change-theme": "cd samples/simple-less-deprecated-change-theme && rm -rf build && webpack"
+    "build-sample:less-deprecated-change-theme": "cd samples/simple-less-deprecated-change-theme && rm -rf build && webpack",
+    "build-simple:less-css-with-url": "cd samples/simple-less-css-with-url && rm -rf build && webpack"
   },
   "author": "trence320@163.com",
   "license": "MIT",
@@ -61,6 +62,7 @@
     "sass-loader": "^8.0.2",
     "shelljs": "^0.8.3",
     "style-loader": "^1.1.3",
+    "url-loader": "^4.1.1",
     "vue-loader": "^14.2.4",
     "vue-template-compiler": "^2.6.11",
     "webpack": "^4.3.0",

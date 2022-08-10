@@ -75,11 +75,14 @@ class ThemesGeneratorPlugin {
       });
     }
     const onDone = () => {
-      ThemesGeneratorPlugin.clearTemp();
+      if (clearTemp) {
+        if (enableHotReload && process.env.WEBPACK_DEV_SERVER) {
+          return;
+        }
+        ThemesGeneratorPlugin.clearTemp();
+      }
     };
-    if (clearTemp) {
-      compiler.hooks.done.tap(pluginInfo, onDone);
-    }
+    compiler.hooks.done.tap(pluginInfo, onDone);
   }
 
   getThemes() {
@@ -125,6 +128,7 @@ class ThemesGeneratorPlugin {
       return;
     }
     const importPattern = new RegExp(`@import (.+)${defaultStyle}(.+)`);
+    const urlFilePattern = new RegExp(/(.+):(.*)url\((.+)\);/g);
     collectFiles(srcDir, themesDependencies, (file) => {
       const fileContent = fs.readFileSync(file).toString();
       return importPattern.test(fileContent);
@@ -140,6 +144,15 @@ class ThemesGeneratorPlugin {
       fs.copyFileSync(path.join(process.cwd(), d), newFile);
       const fileContent = fs.readFileSync(newFile).toString();
       const newContent = fileContent.replace(importPattern, '');
+      const urlFiles = newContent.match(urlFilePattern);
+      if (urlFiles && urlFiles.length > 0) {
+        urlFiles.forEach((file) => {
+          const urlInfo = file.substring(file.indexOf('url(') + 4, file.lastIndexOf(')'));
+          const styleFile = path.resolve(process.cwd(), d);
+          const urlFile = path.join(styleFile.substring(0, styleFile.lastIndexOf('/')), urlInfo);
+          fs.copySync(urlFile, urlFile.replace(process.cwd(), TEMP_THEMES_DIR));
+        });
+      }
       fs.writeFileSync(newFile, newContent);
       importContent += `@import '${path.posix.join('./', d)}';\n`;
     });
